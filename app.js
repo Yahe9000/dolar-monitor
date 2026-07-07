@@ -8,6 +8,7 @@ const fechaTexto = document.getElementById('fecha-actual');
 const tasaSelector = document.getElementById('tasa-selector'); 
 const btnCapture = document.getElementById('btn-capture'); 
 const themeBtn = document.getElementById('btn-theme');
+const btnEnableNotifications = document.getElementById('btn-enable-notifications');
 
 // Referencias Nuevas (UX y Menú)
 const btnMenuToggle = document.getElementById('btn-menu-toggle');
@@ -172,7 +173,6 @@ menuOverlay.addEventListener('click', toggle);
 
 
 // ====== CONFIGURACIÓN Y NOTIFICACIONES DE FIREBASE ======
-// 1. Configurar Firebase en el cliente
 const firebaseConfig = {
   apiKey: "AIzaSyCesCFnkX1KISBYzgHNvBdwY2R1Be7c9UQ",
   authDomain: "dolar-monitor-diario.firebaseapp.com",
@@ -182,38 +182,47 @@ const firebaseConfig = {
   appId: "1:507179043038:web:65f5541b7a09cb45531a4f"
 };
 
-// Inicializamos la app de Firebase
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
-const db = firebase.firestore(); // Inicializamos Firestore
+const db = firebase.firestore(); 
 
-// 2. Pedir permiso al usuario
-Notification.requestPermission().then((permission) => {
-    if (permission === 'granted') {
-        console.log('Permiso de notificaciones concedido');
-        
-        // 3. Obtener el token del dispositivo
-        messaging.getToken({ 
-            vapidKey: 'BAo47eL2Ro2S9fsWVXjki9-b026QHG2iPtMNONzbSOA988x93F1vKlmnnkIjMJFbZIErXmk-FW7A66QptBkcFf4'
-        }).then((currentToken) => {
-            if (currentToken) {
-                console.log('Token obtenido, guardando automáticamente...');
-                
-                // GUARDADO AUTOMÁTICO EN FIRESTORE
-                db.collection('tokens').doc(currentToken).set({
-                    token: currentToken,
-                    fecha: firebase.firestore.FieldValue.serverTimestamp()
-                })
-                .then(() => console.log('¡Token guardado exitosamente en Firestore!'))
-                .catch((err) => console.error('Error al guardar:', err));
-            }
-        }).catch((err) => {
-            console.log('Error al obtener el token:', err);
-        });
-    } else {
-        console.log('Permiso denegado por el usuario');
-    }
-});
+// Función para solicitar permisos mediante botón
+function solicitarPermisos() {
+    Notification.requestPermission().then((permission) => {
+        if (permission === 'granted') {
+            console.log('Permiso de notificaciones concedido');
+            
+            messaging.getToken({ 
+                vapidKey: 'BAo47eL2Ro2S9fsWVXjki9-b026QHG2iPtMNONzbSOA988x93F1vKlmnnkIjMJFbZIErXmk-FW7A66QptBkcFf4'
+            }).then((currentToken) => {
+                if (currentToken) {
+                    db.collection('tokens').doc(currentToken).set({
+                        token: currentToken,
+                        fecha: firebase.firestore.FieldValue.serverTimestamp()
+                    })
+                    .then(() => {
+                        console.log('¡Token guardado!');
+                        mostrarToast('¡Notificaciones activadas!');
+                    })
+                    .catch((err) => console.error('Error al guardar:', err));
+                }
+            }).catch((err) => {
+                console.log('Error al obtener el token:', err);
+            });
+mostrarToast('¡Notificaciones activas!'); 
+       
+          
+        } else {
+            console.log('Permiso denegado por el usuario');
+            mostrarToast('Permiso denegado');
+        }
+    });
+}
+
+// Evento para el botón
+if (btnEnableNotifications) {
+    btnEnableNotifications.addEventListener('click', solicitarPermisos);
+}
 
 // Detectar notificaciones cuando la app SÍ está abierta (Primer Plano)
 messaging.onMessage((payload) => {
@@ -221,10 +230,10 @@ messaging.onMessage((payload) => {
     alert(`🔔 ¡Notificación en vivo!\n\nTítulo: ${payload.notification.title}\nTexto: ${payload.notification.body}`);
 });
 
-// Ejecución inicial de la app
+// Ejecución inicial
 obtenerTasa();
 
-// ====== REGISTRO DEL SERVICE WORKER (Para PWA y Notificaciones) ======
+// ====== REGISTRO DEL SERVICE WORKER ======
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./firebase-messaging-sw.js')
@@ -235,4 +244,5 @@ if ('serviceWorker' in navigator) {
         console.error('Fallo al registrar el Service Worker:', error);
       });
   });
-}
+            }
+    
