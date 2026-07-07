@@ -1,1 +1,33 @@
 
+name: Monitor Tasa BCV
+
+on:
+  schedule:
+    # Cron job que se ejecuta cada 15 minutos (ej. 12:00, 12:15, 12:30...)
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+    # Este te permite ejecutar el script a mano desde la web con un botón por si lo necesitas
+
+jobs:
+  run-checker:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 📥 Clonar el repositorio
+      uses: actions/checkout@v4
+
+    - name: ⚙️ Configurar entorno de Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20' 
+
+    - name: 📦 Instalar paquete de Firebase
+      # Instalamos solo la dependencia necesaria antes de correr el script
+      run: npm install firebase-admin
+
+    - name: 🚀 Ejecutar el verificador de tasa
+      # Inyectamos el JSON secreto en la variable de entorno
+      env:
+        FIREBASE_CREDENTIALS: ${{ secrets.FIREBASE_CREDENTIALS }}
+      run: node checker.js
+      
