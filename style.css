@@ -1,0 +1,382 @@
+:root {
+    --bg-light: #f0f2f5;
+    --card-white: #ffffff;
+    --text-main: #333;
+    --accent-teal: #20a887;
+    --light-green: #e6f4ea;
+    --gray-text: #666;
+    --border-color: #eee;
+    --shadow-color: rgba(0, 0, 0, 0.08);
+    --btn-bg: #ffffff;
+    --logo-grad: linear-gradient(135deg, #1e3a34 0%, #20a887 100%);
+}
+
+body.dark-mode {
+    --bg-light: #121212;
+    --card-white: #1e1e1e;
+    --text-main: #f5f5f5;
+    --light-green: #142d24;
+    --gray-text: #a0a0a0;
+    --border-color: #333;
+    --shadow-color: rgba(0, 0, 0, 0.4);
+    --btn-bg: #2a2a2a;
+    --logo-grad: linear-gradient(135deg, #20a887 0%, #34d399 100%);
+}
+
+body {
+    background-color: var(--bg-light);
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text-main);
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    margin: 0;
+    transition: background-color 0.3s;
+    overflow-x: hidden; /* Evita que el menú lateral haga scroll horizontal */
+}
+
+.app-container { width: 100%; max-width: 400px; position: relative; z-index: 1; }
+
+/* LOGO DMD ESTILIZADO */
+.logo-container { text-align: center; margin-bottom: 25px; }
+
+.logo-circle {
+    width: 75px;
+    height: 75px;
+    background: var(--logo-grad);
+    border-radius: 22px; 
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 20px rgba(32, 168, 135, 0.3);
+    border: 2px solid rgba(255,255,255,0.1);
+}
+
+.logo-text {
+    color: white;
+    font-family: 'Georgia', serif;
+    font-weight: bold;
+    font-size: 20px;
+    letter-spacing: 2px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+h1 { 
+    font-size: 22px; 
+    margin-top: 15px; 
+    font-weight: 700; 
+    letter-spacing: -0.5px;
+    color: var(--text-main);
+}
+
+/* TARJETA Y COMPONENTES */
+.main-card {
+    background: var(--card-white);
+    padding: 24px;
+    border-radius: 24px;
+    box-shadow: 0 10px 30px var(--shadow-color);
+    transition: 0.3s;
+}
+
+.subtitle { color: var(--gray-text); text-align: center; font-size: 13px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
+
+select.badge-bcv {
+    background: var(--light-green);
+    color: var(--accent-teal);
+    padding: 14px;
+    border-radius: 12px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    width: 100%;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    font-size: 16px;
+    text-align-last: center;
+    appearance: none;
+}
+
+.input-row { display: flex; align-items: center; border-bottom: 1px solid var(--border-color); padding: 18px 0; gap: 12px; }
+.input-row input { border: none; font-size: 20px; width: 100%; outline: none; text-align: right; background: transparent; color: var(--text-main); font-weight: 600; }
+
+.variation-box { display: flex; justify-content: space-between; align-items: center; margin-top: 18px; font-size: 13px; color: var(--gray-text); }
+
+.date-pill { background: var(--card-white); padding: 16px; border-radius: 50px; text-align: center; margin: 25px 0; box-shadow: 0 4px 12px var(--shadow-color); display: flex; justify-content: center; align-items: center; gap: 10px; font-weight: 500; }
+
+/* NAVEGACIÓN */
+.bottom-nav { display: flex; justify-content: center; gap: 15px; }
+.btn-circle { width: 55px; height: 55px; border-radius: 50%; border: none; background: var(--btn-bg); box-shadow: 0 4px 15px var(--shadow-color); cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-main); transition: 0.2s; }
+.btn-circle:active { transform: scale(0.9); }
+.btn-circle.primary { background: var(--accent-teal); color: white; }
+
+/* ICONOS CSS */
+.icon-hourglass {
+    width: 14px; height: 20px;
+    border-top: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    position: relative;
+    display: inline-block;
+}
+.icon-hourglass::before, .icon-hourglass::after {
+    content: ""; position: absolute; left: 50%; transform: translateX(-50%);
+    width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent;
+}
+.icon-hourglass::before { top: 0; border-top: 9px solid currentColor; }
+.icon-hourglass::after { bottom: 0; border-bottom: 9px solid currentColor; }
+
+.spinning { animation: spin 1.5s linear infinite; }
+@keyframes spin { 100% { transform: rotate(180deg); } }
+
+.icon-copy { width: 12px; height: 15px; border: 2px solid var(--gray-text); border-radius: 2px; position: relative; display: inline-block; cursor: pointer; }
+.icon-copy::before { content: ""; position: absolute; top: -4px; left: -4px; width: 12px; height: 15px; border: 2px solid var(--gray-text); border-radius: 2px; background: var(--card-white); }
+
+.icon-trending { width: 14px; height: 14px; border-bottom: 2px solid var(--accent-teal); border-left: 2px solid var(--accent-teal); display: inline-block; transform: rotate(-45deg); margin-right: 5px; }
+
+.icon-calendar { width: 16px; height: 14px; border: 2px solid currentColor; border-top: 4px solid currentColor; border-radius: 2px; display: inline-block; }
+
+.icon-camera { width: 20px; height: 14px; border: 2px solid currentColor; border-radius: 3px; position: relative; display: inline-block; }
+.icon-camera::after { content: ""; position: absolute; top: 3px; left: 6px; width: 4px; height: 4px; border: 2px solid currentColor; border-radius: 50%; }
+
+.icon-moon { width: 14px; height: 14px; border-radius: 50%; box-shadow: -4px 4px 0 0 currentColor; transform: rotate(-15deg); display: inline-block; }
+
+.icon-menu { width: 18px; height: 2px; background: currentColor; position: relative; display: inline-block; }
+.icon-menu::before, .icon-menu::after { content: ""; position: absolute; width: 18px; height: 2px; background: currentColor; left: 0; }
+.icon-menu::before { top: -6px; } .icon-menu::after { top: 6px; }
+
+.icon-clock { width: 14px; height: 14px; border: 2px solid var(--gray-text); border-radius: 50%; position: relative; display: inline-block; }
+.icon-clock::after { content: ""; position: absolute; top: 3px; left: 6px; width: 2px; height: 4px; background: var(--gray-text); }
+
+/* --- ESTILOS NUEVOS (Menú, Botones Rápidos, Notificaciones) --- */
+
+/* Botones rápidos */
+.quick-amounts {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+.btn-quick {
+    background: var(--light-green);
+    color: var(--accent-teal);
+    border: none;
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.btn-quick:active { transform: scale(0.95); }
+
+/* Menú Lateral */
+.side-menu {
+    position: fixed;
+    top: 0;
+    right: -300px;
+    width: 280px;
+    height: 100vh;
+    background: var(--card-white);
+    box-shadow: -5px 0 20px rgba(0,0,0,0.1);
+    z-index: 1000;
+    transition: right 0.3s ease;
+    padding: 20px;
+    box-sizing: border-box;
+}
+.side-menu.active { right: 0; }
+
+.menu-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.5);
+    z-index: 999;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+.menu-overlay.active { display: block; opacity: 1; }
+
+.menu-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
+
+.menu-list { list-style: none; padding: 0; margin: 0; }
+.menu-list li {
+    padding: 15px 0;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-main);
+    font-size: 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.menu-list li:hover { color: var(--accent-teal); }
+
+/* Toast Notification (Notificación inferior) */
+.toast {
+    position: fixed;
+    bottom: -50px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent-teal);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: bottom 0.3s ease;
+    z-index: 2000;
+}
+.toast.show { bottom: 20px; }
+
+/* Icono Close (para la X del menú lateral) */
+.icon-close { position: relative; width: 15px; height: 15px; }
+.icon-close::before, .icon-close::after { content: ''; position: absolute; top: 7px; left: 0; width: 15px; height: 2px; background: currentColor; }
+.icon-close::before { transform: rotate(45deg); }
+.icon-close::after { transform: rotate(-45deg); }
+
+/* --- MODALES (Ventanitas flotantes) --- */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.6); z-index: 3000;
+    display: flex; justify-content: center; align-items: center;
+    opacity: 0; visibility: hidden; transition: 0.3s;
+    padding: 20px; box-sizing: border-box;
+}
+.modal-overlay.active { opacity: 1; visibility: visible; }
+
+.modal-card {
+    background: var(--card-white);
+    padding: 25px; border-radius: 24px;
+    width: 100%; max-width: 350px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    transform: translateY(30px); transition: 0.3s;
+}
+.modal-overlay.active .modal-card { transform: translateY(0); }
+
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.modal-header h3 { margin: 0; font-size: 18px; color: var(--text-main); font-weight: 700; }
+.btn-small { width: 35px; height: 35px; min-width: 35px; }
+
+/* --- ESTILOS PARA CÁLCULOS GUARDADOS --- */
+.saved-input-text, .saved-input-amount {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: var(--card-white);
+    color: var(--text-main);
+    font-size: 15px;
+    outline: none;
+    box-sizing: border-box;
+}
+.saved-select {
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: var(--card-white);
+    color: var(--text-main);
+    font-size: 14px;
+    outline: none;
+}
+.saved-item {
+    background: var(--bg-light);
+    border-radius: 16px;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid var(--border-color);
+}
+.saved-item-info h4 {
+    margin: 0 0 5px 0;
+    font-size: 15px;
+    color: var(--text-main);
+}
+.saved-original {
+    font-size: 13px;
+    color: var(--gray-text);
+    font-weight: 600;
+}
+.saved-item-result {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.saved-bs {
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--accent-teal);
+}
+.btn-delete-saved {
+    background: rgba(255, 60, 60, 0.1);
+    color: #ff3c3c;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.btn-delete-saved:active {
+    transform: scale(0.9);
+}
+.btn-delete-saved .icon-close {
+    width: 10px; height: 10px;
+}
+.btn-delete-saved .icon-close::before, .btn-delete-saved .icon-close::after {
+    top: 4px; width: 10px;
+}
+
+/* --- ICONO PARA TASA MANUAL --- */
+.icon-edit { 
+    width: 14px; 
+    height: 14px; 
+    border: 2px solid var(--gray-text); 
+    border-radius: 3px; 
+    position: relative; 
+    display: inline-block; 
+}
+.icon-edit::after { 
+    content: ""; 
+    position: absolute; 
+    top: 2px; 
+    left: 2px; 
+    width: 6px; 
+    height: 2px; 
+    background: var(--gray-text); 
+    border-radius: 1px;
+}
+.icon-edit::before {
+    content: ""; 
+    position: absolute; 
+    top: 6px; 
+    left: 2px; 
+    width: 4px; 
+    height: 2px; 
+    background: var(--gray-text); 
+    border-radius: 1px;
+}
+/* Hacer que herede el color del contenedor en el menú activo */
+.menu-list li:hover .icon-edit,
+.modal-header .icon-edit {
+    border-color: currentColor;
+}
+.menu-list li:hover .icon-edit::after,
+.menu-list li:hover .icon-edit::before,
+.modal-header .icon-edit::after,
+.modal-header .icon-edit::before {
+    background: currentColor;
+}
+
+/* Estilo específico para el botón de limpiar */
+.btn-quick.btn-clear {
+    background: rgba(255, 60, 60, 0.1);
+    color: #ff3c3c;
+}
+.btn-quick.btn-clear:active {
+    transform: scale(0.95);
+}

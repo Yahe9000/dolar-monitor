@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dólar Monitor Diario</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link rel="manifest" href="manifest.json">
+    
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+<div id="side-menu" class="side-menu">
+    <div class="menu-header">
+        <h2>Menú Avanzado</h2>
+        <button id="btn-close-menu" class="btn-circle"><i class="icon-close"></i></button>
+    </div>
+    <ul class="menu-list">
+        <li><i class="icon-euro"></i> Calculadora EUR/VES (Próximamente)</li>
+        <li id="btn-open-manual-rate">
+            <i class="icon-edit"></i> Tasa Manual (Personalizada)
+        </li>
+        <li><i class="icon-save"></i> Cálculos Guardados</li>
+    </ul>
+</div>
+<div id="menu-overlay" class="menu-overlay"></div>
+
+<div class="app-container">
+    <div class="logo-container">
+        <div class="logo-circle">
+            <span class="logo-text">DMD</span>
+        </div>
+        <h1>Dólar Monitor Diario</h1>
+    </div>
+
+    <div class="main-card">
+        <p class="subtitle">Tasa de Referencia Oficial</p>
+        
+        <select id="tasa-selector" class="badge-bcv">
+            <option value="oficial">Dólar BCV</option>
+            <option value="paralelo">Dólar Paralelo</option>
+            <option value="personalizada">Tasa Manual</option>
+        </select>
+        
+        <div class="input-row">
+            <span>$</span>
+            <input type="text" inputmode="decimal" id="input-usd" value="1,00">
+            <i class="icon-copy" id="copy-usd" title="Copiar USD"></i>
+        </div>
+        
+        <div class="quick-amounts">
+            <button class="btn-quick" data-val="1">+1$</button>
+            <button class="btn-quick" data-val="5">+5$</button>
+            <button class="btn-quick" data-val="10">+10$</button>
+            <button class="btn-quick" data-val="50">+50$</button>
+            <button class="btn-quick" data-val="100">+100$</button>
+            <button class="btn-quick btn-clear" id="btn-clear-inputs" title="Limpiar todo">
+                <i class="icon-close" style="display: inline-block; transform: scale(0.8); top: 1px;"></i> Clear
+            </button>
+        </div>
+
+        <div class="input-row">
+            <span>Bs</span>
+            <input type="text" inputmode="decimal" id="input-ves" value="622,21">
+            <i class="icon-copy" id="copy-ves" title="Copiar Bs"></i>
+        </div>
+
+        <div class="variation-box">
+            <span id="variacion-texto"><i class="icon-trending"></i> Variación Diaria: Cargando...</span>
+            <i class="icon-clock"></i>
+        </div>
+    </div>
+
+    <div class="date-pill">
+        <span id="fecha-actual">Cargando fecha...</span> <i class="icon-calendar"></i>
+    </div>
+
+    <div class="bottom-nav">
+        <button class="btn-circle primary" id="btn-refresh">
+            <i class="icon-hourglass" id="refresh-icon"></i>
+        </button>
+        <button class="btn-circle" id="btn-capture"><i class="icon-camera"></i></button>
+        <button class="btn-circle" id="btn-theme"><i class="icon-moon"></i></button>
+        <button class="btn-circle" id="btn-menu-toggle"><i class="icon-menu"></i></button>
+    </div>
+</div>
+
+<div id="toast" class="toast">Copiado al portapapeles</div>
+
+<div class="modal-overlay" id="modal-manual-rate">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3><i class="icon-edit"></i> Tasa Manual</h3>
+            <button class="btn-circle btn-small" id="btn-close-manual-rate">
+                <i class="icon-close"></i>
+            </button>
+        </div>
+        
+        <p class="subtitle" style="text-align: left; margin-bottom: 5px;">Ingresa el valor del dólar:</p>
+        
+        <div class="input-row" style="margin-bottom: 20px;">
+            <span style="color: var(--gray-text); font-weight: bold;">Bs.</span>
+            <input type="number" id="input-manual-rate" placeholder="0.00" step="0.01">
+        </div>
+        
+        <button class="badge-bcv" id="btn-save-manual-rate">
+            Aplicar Tasa Manual
+        </button>
+    </div>
+</div>
+
+<script src="app.js"></script>
+<script src="tasa-personalizada.js"></script>
+<script src="calculadora-euro.js"></script>
+<script src="guardados.js"></script>
+
+</body>
+</html>
