@@ -22,7 +22,7 @@ messaging.onBackgroundMessage((payload) => {
   const notificationOptions = {
     body: payload.notification.body,
     // Usamos el mismo icono de tu manifest para mantener la marca de la app
-    icon: 'https://cdn-icons-png.flaticon.com/512/272/272525.png'
+    icon: './Logo_512.png'
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);
@@ -41,7 +41,7 @@ const ASSETS = [
   './tasa-personalizada.js',
   './guardados.js',
   './manifest.json',
-  'https://cdn-icons-png.flaticon.com/512/272/272525.png'
+  './Logo_512.png'
 ];
 
 self.addEventListener('install', (e) => {
