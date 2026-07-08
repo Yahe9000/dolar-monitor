@@ -38,10 +38,19 @@ const copyVes = document.getElementById('copy-ves');
 const toast = document.getElementById('toast');
 const btnClearInputs = document.getElementById('btn-clear-inputs'); 
 
+// Indicador dinámico de símbolo de divisa ($ / € / ₮)
+const simboloMoneda = inputUsd ? inputUsd.parentElement.querySelector('span') : null;
+
 // ==========================================
 // 3. ESTADO DE LA APLICACIÓN
 // ==========================================
-let tasas = JSON.parse(localStorage.getItem('dmd_tasas')) || { oficial: 622.21, paralelo: 622.21, personalizada: 622.21 }; 
+let tasas = JSON.parse(localStorage.getItem('dmd_tasas')) || { 
+    oficial: 622.21, 
+    paralelo: 622.21, 
+    usdt: 645.50, 
+    euro: 662.15, 
+    personalizada: 622.21 
+}; 
 let tipoTasaActual = localStorage.getItem('dmd_tipoTasa') || 'oficial'; 
 let tasaActual = tasas[tipoTasaActual];
 
@@ -73,13 +82,21 @@ function toggleMenu() {
     }
 }
 
+function actualizarSimboloVisual() {
+    if (simboloMoneda) {
+        if (tipoTasaActual === 'euro') simboloMoneda.textContent = '€';
+        else if (tipoTasaActual === 'usdt') simboloMoneda.textContent = '₮';
+        else simboloMoneda.textContent = '$';
+    }
+}
+
 // Alias de control de menú buscado por módulos externos (ej: calculadora-euro)
 function toggle() {
     toggleMenu();
 }
 
 // ==========================================
-// 5. LÓGICA DE CÁLCULO Y API
+// 5. LÓGICA DE CÁLCULO Y API MULTI-TASA
 // ==========================================
 function calcular(origen) {
     const vUsd = parsearNumero(inputUsd.value);
@@ -104,14 +121,37 @@ function calcular(origen) {
 async function obtenerTasa() {
     if (refreshIcon) refreshIcon.classList.add('spinning');
     try {
-        const res = await fetch('https://ve.dolarapi.com/v1/dolares');
-        const data = await res.json();
+        // Ejecución en paralelo de todas las fuentes necesarias
+        const [resDolar, resEuro, resUsdt] = await Promise.all([
+            fetch('https://ve.dolarapi.com/v1/dolares'),
+            fetch('https://ve.dolarapi.com/v1/euros'),
+            fetch('https://pydolarvenezuela-api.vercel.app/api/v1/dollar/page?page=binance').catch(() => null)
+        ]);
         
-        const bcv = data.find(d => d.fuente === 'oficial');
-        const paralelo = data.find(d => d.fuente === 'paralelo');
-
+        const dataDolar = await resDolar.json();
+        const dataEuro = await resEuro.json();
+        
+        // Sincronizar Dólar Oficial BCV y Paralelo
+        const bcv = dataDolar.find(d => d.fuente === 'oficial');
+        const paralelo = dataDolar.find(d => d.fuente === 'paralelo');
         if (bcv) tasas.oficial = bcv.promedio;
         if (paralelo) tasas.paralelo = paralelo.promedio;
+
+        // Sincronizar Euro Oficial (BCV)
+        if (Array.isArray(dataEuro)) {
+            const euroOficial = dataEuro.find(e => e.fuente === 'oficial') || dataEuro[0];
+            if (euroOficial) tasas.euro = euroOficial.promedio;
+        } else if (dataEuro && dataEuro.promedio) {
+            tasas.euro = dataEuro.promedio;
+        }
+
+        // Sincronizar USDT Binance (PyDolarVenezuela API)
+        if (resUsdt) {
+            const dataUsdt = await resUsdt.json();
+            if (dataUsdt.monitors && dataUsdt.monitors.binance) {
+                tasas.usdt = dataUsdt.monitors.binance.price;
+            }
+        }
 
         localStorage.setItem('dmd_tasas', JSON.stringify(tasas));
         tasaActual = tasas[tipoTasaActual];
@@ -126,16 +166,15 @@ async function obtenerTasa() {
         
         if (fechaTexto) {
             fechaTexto.innerHTML = fechaFormateada;
-            fechaTexto.style.color = "var(--text-main)"; // Color normal
+            fechaTexto.style.color = "var(--text-main)";
         }
         
         calcular('usd');
-        console.log('Tasas sincronizadas con éxito:', tasas);
+        console.log('Todas las tasas sincronizadas con éxito:', tasas);
     } catch (error) {
-        console.error('Error obteniendo tasas:', error);
+        console.error('Error obteniendo tasas de los servidores:', error);
         mostrarToast('Usando tasas locales sin conexión');
         
-        // Recuperamos la última fecha y la mostramos en rojo con alerta
         const fechaGuardada = localStorage.getItem('dmd_ultima_fecha') || 'Fecha desconocida';
         if (fechaTexto) {
             fechaTexto.innerHTML = `⚠️ Tasa del: ${fechaGuardada}`;
@@ -170,13 +209,10 @@ function solicitarPermisos() {
                             })
                             .then(() => {
                                 console.log('¡Token guardado!');
-                                
                                 localStorage.setItem('dmd_notificaciones_activas', 'true');
-                                
                                 if (btnEnableNotifications) {
                                     btnEnableNotifications.style.color = "var(--accent-teal)";
                                 }
-                                
                                 mostrarToast('¡Notificaciones activadas!');
                             })
                             .catch((err) => console.error('Error al guardar en Firestore:', err));
@@ -212,13 +248,16 @@ if (inputVes) {
 // Botón de actualización manual de la API
 if (btnRefresh) btnRefresh.addEventListener('click', obtenerTasa);
 
-// Selector de Tasas (BCV / Paralelo / Personalizada)
+// Selector de Tasas Avanzado (BCV / Paralelo / USDT / Euro / Personalizada)
 if (tasaSelector) {
     tasaSelector.value = tipoTasaActual;
+    actualizarSimboloVisual();
+    
     tasaSelector.addEventListener('change', (e) => {
         tipoTasaActual = e.target.value;
         localStorage.setItem('dmd_tipoTasa', tipoTasaActual);
         tasaActual = tasas[tipoTasaActual];
+        actualizarSimboloVisual();
         calcular('usd');
     });
 }
@@ -236,7 +275,10 @@ if (copyUsd && inputUsd) {
     copyUsd.addEventListener('click', () => {
         if(inputUsd.value) {
             navigator.clipboard.writeText(inputUsd.value);
-            mostrarToast('Monto USD copiado');
+            let etiqueta = 'USD';
+            if(tipoTasaActual === 'euro') etiqueta = 'EUR';
+            if(tipoTasaActual === 'usdt') etiqueta = 'USDT';
+            mostrarToast(`Monto ${etiqueta} copiado`);
         }
     });
 }
@@ -282,127 +324,26 @@ if (themeBtn) {
     });
 }
 
-// Generación y captura del Recibo Dinámico
+// Captura de Pantalla del Monitor
 if (btnCapture) {
     btnCapture.addEventListener('click', () => {
-        mostrarToast('Generando recibo...');
-
-        // 1. Crear el contenedor temporal fuera de la pantalla visible
-        const recibo = document.createElement('div');
-        recibo.style.position = 'fixed';
-        recibo.style.left = '-9999px';
-        recibo.style.top = '0';
-        recibo.style.width = '350px';
-        recibo.style.padding = '24px';
-        recibo.style.background = '#ffffff';
-        recibo.style.color = '#222222';
-        recibo.style.fontFamily = "'Courier New', Courier, monospace"; // Look clásico de ticket
-        recibo.style.borderRadius = '4px';
-
-        const fechaHoraActual = new Date().toLocaleString('es-VE', {
-            day: '2-digit', month: '2-digit', year: 'numeric',
-            hour: '2-digit', minute: '2-digit', hour12: true
-        });
-
-        // 2. Estructurar el diseño del ticket de cambio
-        recibo.innerHTML = `
-            <div style="text-align: center; border-bottom: 2px dashed #aaaaaa; padding-bottom: 14px; margin-bottom: 14px;">
-                <img id="recibo-logo" src="Logo_512.png" style="width: 75px; height: 75px; margin-bottom: 8px; object-fit: contain;" />
-                <h2 style="margin: 0; font-size: 16px; font-weight: bold; letter-spacing: 1px;">DOLAR MONITOR DIARIO</h2>
-                <p style="margin: 4px 0 0 0; font-size: 11px; color: #555;">Comprobante de Conversión</p>
-            </div>
-            <table style="width: 100%; font-size: 13px; border-collapse: collapse; color: #333;">
-                <tr>
-                    <td style="padding: 4px 0; text-align: left;"><strong>Fecha:</strong></td>
-                    <td style="padding: 4px 0; text-align: right;">${fechaHoraActual}</td>
-                </tr>
-                <tr>
-                    <td style="padding: 4px 0; text-align: left;"><strong>Tasa de cambio:</strong></td>
-                    <td style="padding: 4px 0; text-align: right; text-transform: uppercase;">${tipoTasaActual}</td>
-                </tr>
-                <tr>
-                    <td style="padding: 4px 0; text-align: left;"><strong>Valor Tasa:</strong></td>
-                    <td style="padding: 4px 0; text-align: right; font-weight: bold;">Bs. ${formatearNumero(tasaActual)}</td>
-                </tr>
-                <tr>
-                    <td colspan="2" style="border-top: 1px dashed #cccccc; padding: 6px 0; margin-top: 6px;"></td>
-                </tr>
-                <tr style="font-size: 15px;">
-                    <td style="padding: 6px 0; text-align: left;"><strong>Monto USD:</strong></td>
-                    <td style="padding: 6px 0; text-align: right; font-weight: bold; color: #1b5e20;">$ ${inputUsd.value || '0,00'}</td>
-                </tr>
-                <tr style="font-size: 15px;">
-                    <td style="padding: 6px 0; text-align: left;"><strong>Monto VES:</strong></td>
-                    <td style="padding: 6px 0; text-align: right; font-weight: bold; color: #0d47a1;">Bs. ${inputVes.value || '0,00'}</td>
-                </tr>
-            </table>
-            <div style="border-top: 2px dashed #aaaaaa; padding-top: 10px; margin-top: 16px; text-align: center; font-size: 10px; color: #777;">
-                <p style="margin: 0; text-transform: uppercase;">Verificado Electrónicamente</p>
-            </div>
-        `;
-
-        document.body.appendChild(recibo);
-
-        const imgLogo = recibo.querySelector('#recibo-logo');
-
-        // 3. Renderizar y procesar la salida (Compartir o Descargar)
-        const procesarEnvio = () => {
-            html2canvas(recibo, { useCORS: true, backgroundColor: '#ffffff' }).then(canvas => {
-                document.body.removeChild(recibo); // Limpieza inmediata del DOM
-
-                canvas.toBlob(blob => {
-                    if (!blob) {
-                        mostrarToast('Error al procesar el recibo');
-                        return;
-                    }
-
-                    const nombreArchivo = `Recibo-${Date.now()}.png`;
-                    const file = new File([blob], nombreArchivo, { type: 'image/png' });
-
-                    // Validar si el navegador móvil permite compartir archivos nativos
-                    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-                        navigator.share({
-                            files: [file],
-                            title: 'Recibo de Conversión',
-                            text: `Conversión: $${inputUsd.value || '0,00'} USD = Bs. ${inputVes.value || '0,00'} VES`
-                        })
-                        .then(() => mostrarToast('¡Recibo compartido!'))
-                        .catch(err => {
-                            console.log('Compartir cancelado o interrumpido, descargando...', err);
-                            descargarImagenFallback(canvas);
-                        });
-                    } else {
-                        // Caída de seguridad si corre en navegadores sin soporte Web Share extendido
-                        descargarImagenFallback(canvas);
-                    }
-                }, 'image/png');
-            }).catch(err => {
-                console.error('Error procesando el canvas:', err);
-                if (document.body.contains(recibo)) document.body.removeChild(recibo);
-                mostrarToast('Error al crear el recibo');
+        const objetivo = document.querySelector('.app-container') || document.body;
+        mostrarToast('Generando imagen...');
+        html2canvas(objetivo, { useCORS: true, backgroundColor: null }).then(canvas => {
+            canvas.toBlob(blob => {
+                const item = new ClipboardItem({ "image/png": blob });
+                navigator.clipboard.write([item]).then(() => {
+                    mostrarToast('¡Imagen copiada al portapapeles!');
+                }).catch(err => {
+                    console.error('Fallo de portapapeles, descargando alternativamente...', err);
+                    const link = document.createElement('a');
+                    link.download = `DolarMonitor-${Date.now()}.png`;
+                    link.href = canvas.toDataURL();
+                    link.click();
+                });
             });
-        };
-
-        // Forzar validación de carga del logo antes de disparar el canvas
-        if (imgLogo.complete) {
-            procesarEnvio();
-        } else {
-            imgLogo.onload = procesarEnvio;
-            imgLogo.onerror = () => {
-                console.warn('No se pudo incluir el Logo_512.png en el recibo, procesando sin imagen...');
-                procesarEnvio();
-            };
-        }
+        });
     });
-}
-
-// Función auxiliar para descarga directa
-function descargarImagenFallback(canvas) {
-    const link = document.createElement('a');
-    link.download = `ReciboMonitor-${Date.now()}.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-    mostrarToast('Recibo descargado localmente');
 }
 
 // Disparador del Botón de Notificaciones
@@ -435,5 +376,5 @@ if ('serviceWorker' in navigator) {
         console.error('Fallo al registrar el Service Worker:', error);
       });
   });
-                }
-                
+            }
+            
