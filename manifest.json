@@ -12,7 +12,7 @@
       "type": "image/png"
     },
     {
-      "src": "./Logo_192.png",
+      "src": "./Logo_512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
