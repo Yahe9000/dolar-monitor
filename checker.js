@@ -2,8 +2,7 @@ const { initializeApp, cert } = require('firebase-admin/app');
 const { getMessaging } = require('firebase-admin/messaging');
 const { getFirestore } = require('firebase-admin/firestore');
 
-// --- AQUÍ ESTÁ EL CAMBIO ---
-// Leemos la credencial desde la variable de entorno (Secret)
+// Leemos la credencial desde la variable de entorno (Secret de GitHub)
 const serviceAccount = JSON.parse(process.env.FIREBASE_CREDENTIALS);
 
 initializeApp({
@@ -27,9 +26,11 @@ async function enviarNotificacionMasiva(titulo, cuerpo) {
       tokens: tokens
     };
 
-    // Enviamos el mensaje masivo a todos los tokens recogidos
-    const response = await getMessaging().sendMulticast(message);
-    console.log(`🚀 Notificación enviada con éxito a ${response.successCount} dispositivos.`);
+    // =========================================================
+    // CORRECCIÓN CRÍTICA: sendEachForMulticast
+    // =========================================================
+    const response = await getMessaging().sendEachForMulticast(message);
+    console.log(`🚀 Notificación enviada con éxito a ${response.successCount} dispositivos (Fallaron: ${response.failureCount}).`);
 
     // =========================================================
     // LÓGICA DE LIMPIEZA ("TOKEN PRUNING")
@@ -55,16 +56,16 @@ async function enviarNotificacionMasiva(titulo, cuerpo) {
         }
       });
 
-      // Si encontramos tokens muertos, los borramos de Firestore
+      // Si encontramos tokens muertos, los borramos de Firestore usando un Batch
       if (tokensInvalidos.length > 0) {
         console.log(`🗑️ Limpiando la base de datos: Eliminando ${tokensInvalidos.length} tokens inválidos/zombies...`);
         
-        // Creamos un array de promesas de eliminación para borrarlos en paralelo
-        const promesasEliminacion = tokensInvalidos.map(token => 
-          db.collection('tokens').doc(token).delete()
-        );
+        const batch = db.batch();
+        tokensInvalidos.forEach(token => {
+          batch.delete(db.collection('tokens').doc(token));
+        });
         
-        await Promise.all(promesasEliminacion);
+        await batch.commit();
         console.log('✅ Base de datos limpia.');
       }
     }
@@ -80,7 +81,11 @@ async function chequearTasa() {
     const res = await fetch('https://ve.dolarapi.com/v1/dolares');
     const data = await res.json();
     const bcv = data.find(d => d.fuente === 'oficial');
-    if (!bcv) process.exit(1);
+    
+    if (!bcv) {
+        console.log('❌ No se encontró la tasa oficial en la API.');
+        process.exit(1);
+    }
 
     const tasaActual = bcv.promedio;
     const configRef = db.collection('config').doc('tasa_monitor');
@@ -88,10 +93,14 @@ async function chequearTasa() {
     
     let tasaAnterior = docSnap.exists ? docSnap.data().tasa : 0;
 
-    if (tasaActual !== tasaAnterior) {
-      console.log(`⚠️ Cambio detectado: ${tasaAnterior} -> ${tasaActual}`);
+    // Redondeamos a 4 decimales para evitar problemas de precisión
+    const actualFixed = parseFloat(tasaActual).toFixed(4);
+    const anteriorFixed = parseFloat(tasaAnterior).toFixed(4);
+
+    if (actualFixed !== anteriorFixed) {
+      console.log(`⚠️ Cambio detectado: ${anteriorFixed} -> ${actualFixed}`);
       await configRef.set({ tasa: tasaActual });
-      await enviarNotificacionMasiva('🚨 Ajuste de Tasa Oficial', `El Dólar BCV ahora es: ${tasaActual} Bs.`);
+      await enviarNotificacionMasiva('🚨 Ajuste de Tasa Oficial', `El Dólar BCV ahora es: ${actualFixed} Bs.`);
     } else {
       console.log('✅ Sin cambios en la tasa.');
     }
