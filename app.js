@@ -324,26 +324,129 @@ if (themeBtn) {
     });
 }
 
-// Captura de Pantalla del Monitor
+// ==========================================
+// Generación y captura del Recibo Dinámico
+// ==========================================
 if (btnCapture) {
     btnCapture.addEventListener('click', () => {
-        const objetivo = document.querySelector('.app-container') || document.body;
-        mostrarToast('Generando imagen...');
-        html2canvas(objetivo, { useCORS: true, backgroundColor: null }).then(canvas => {
-            canvas.toBlob(blob => {
-                const item = new ClipboardItem({ "image/png": blob });
-                navigator.clipboard.write([item]).then(() => {
-                    mostrarToast('¡Imagen copiada al portapapeles!');
-                }).catch(err => {
-                    console.error('Fallo de portapapeles, descargando alternativamente...', err);
-                    const link = document.createElement('a');
-                    link.download = `DolarMonitor-${Date.now()}.png`;
-                    link.href = canvas.toDataURL();
-                    link.click();
-                });
-            });
+        mostrarToast('Generando recibo...');
+
+        // 1. Crear el contenedor temporal fuera de la pantalla visible
+        const recibo = document.createElement('div');
+        recibo.style.position = 'fixed';
+        recibo.style.left = '-9999px';
+        recibo.style.top = '0';
+        recibo.style.width = '350px';
+        recibo.style.padding = '24px';
+        recibo.style.background = '#ffffff';
+        recibo.style.color = '#222222';
+        recibo.style.fontFamily = "'Courier New', Courier, monospace"; // Look clásico de ticket
+        recibo.style.borderRadius = '4px';
+
+        const fechaHoraActual = new Date().toLocaleString('es-VE', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit', hour12: true
         });
+
+        // 2. Estructurar el diseño del ticket de cambio
+        recibo.innerHTML = `
+            <div style="text-align: center; border-bottom: 2px dashed #aaaaaa; padding-bottom: 14px; margin-bottom: 14px;">
+                <img id="recibo-logo" src="Logo_512.png" style="width: 75px; height: 75px; margin-bottom: 8px; object-fit: contain;" />
+                <h2 style="margin: 0; font-size: 16px; font-weight: bold; letter-spacing: 1px;">DOLAR MONITOR DIARIO</h2>
+                <p style="margin: 4px 0 0 0; font-size: 11px; color: #555;">Comprobante de Conversión</p>
+            </div>
+            <table style="width: 100%; font-size: 13px; border-collapse: collapse; color: #333;">
+                <tr>
+                    <td style="padding: 4px 0; text-align: left;"><strong>Fecha:</strong></td>
+                    <td style="padding: 4px 0; text-align: right;">${fechaHoraActual}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 4px 0; text-align: left;"><strong>Tasa de cambio:</strong></td>
+                    <td style="padding: 4px 0; text-align: right; text-transform: uppercase;">${tipoTasaActual}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 4px 0; text-align: left;"><strong>Valor Tasa:</strong></td>
+                    <td style="padding: 4px 0; text-align: right; font-weight: bold;">Bs. ${formatearNumero(tasaActual)}</td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="border-top: 1px dashed #cccccc; padding: 6px 0; margin-top: 6px;"></td>
+                </tr>
+                <tr style="font-size: 15px;">
+                    <td style="padding: 6px 0; text-align: left;"><strong>Monto Divisa:</strong></td>
+                    <td style="padding: 6px 0; text-align: right; font-weight: bold; color: #1b5e20;">${simboloMoneda ? simboloMoneda.textContent : '$'} ${inputUsd.value || '0,00'}</td>
+                </tr>
+                <tr style="font-size: 15px;">
+                    <td style="padding: 6px 0; text-align: left;"><strong>Monto VES:</strong></td>
+                    <td style="padding: 6px 0; text-align: right; font-weight: bold; color: #0d47a1;">Bs. ${inputVes.value || '0,00'}</td>
+                </tr>
+            </table>
+            <div style="border-top: 2px dashed #aaaaaa; padding-top: 10px; margin-top: 16px; text-align: center; font-size: 10px; color: #777;">
+                <p style="margin: 0; text-transform: uppercase;">Verificado Electrónicamente</p>
+            </div>
+        `;
+
+        document.body.appendChild(recibo);
+
+        const imgLogo = recibo.querySelector('#recibo-logo');
+
+        // 3. Renderizar y procesar la salida (Compartir o Descargar)
+        const procesarEnvio = () => {
+            html2canvas(recibo, { useCORS: true, backgroundColor: '#ffffff' }).then(canvas => {
+                document.body.removeChild(recibo); // Limpieza inmediata del DOM
+
+                canvas.toBlob(blob => {
+                    if (!blob) {
+                        mostrarToast('Error al procesar el recibo');
+                        return;
+                    }
+
+                    const nombreArchivo = `Recibo-${Date.now()}.png`;
+                    const file = new File([blob], nombreArchivo, { type: 'image/png' });
+
+                    // Validar si el navegador móvil permite compartir archivos nativos
+                    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                        navigator.share({
+                            files: [file],
+                            title: 'Recibo de Conversión',
+                            text: `Conversión: ${simboloMoneda ? simboloMoneda.textContent : '$'}${inputUsd.value || '0,00'} = Bs. ${inputVes.value || '0,00'} VES`
+                        })
+                        .then(() => mostrarToast('¡Recibo compartido!'))
+                        .catch(err => {
+                            console.log('Compartir cancelado o interrumpido, descargando...', err);
+                            descargarImagenFallback(canvas);
+                        });
+                    } else {
+                        // Caída de seguridad si corre en navegadores sin soporte Web Share extendido
+                        descargarImagenFallback(canvas);
+                    }
+                }, 'image/png');
+            }).catch(err => {
+                console.error('Error procesando el canvas:', err);
+                if (document.body.contains(recibo)) document.body.removeChild(recibo);
+                mostrarToast('Error al crear el recibo');
+            });
+        };
+
+        // Forzar validación de carga del logo antes de disparar el canvas
+        if (imgLogo.complete) {
+            procesarEnvio();
+        } else {
+            imgLogo.onload = procesarEnvio;
+            imgLogo.onerror = () => {
+                console.warn('No se pudo incluir el Logo_512.png en el recibo, procesando sin imagen...');
+                procesarEnvio();
+            };
+        }
     });
+}
+
+// Función auxiliar para descarga directa
+function descargarImagenFallback(canvas) {
+    const link = document.createElement('a');
+    link.download = `ReciboMonitor-${Date.now()}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    mostrarToast('Recibo descargado localmente');
 }
 
 // Disparador del Botón de Notificaciones
@@ -376,6 +479,4 @@ if ('serviceWorker' in navigator) {
         console.error('Fallo al registrar el Service Worker:', error);
       });
   });
-            }
-
-                                
+                }
