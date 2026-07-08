@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -10,13 +9,14 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="./logo_192.png">
     
-    
+    <!-- Configuración e Importaciones de Firebase (Compat) -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
+<!-- Menú Lateral Desplegable Avanzado -->
 <div id="side-menu" class="side-menu">
     <div class="menu-header">
         <h2>Menú Avanzado</h2>
@@ -32,6 +32,7 @@
 </div>
 <div id="menu-overlay" class="menu-overlay"></div>
 
+<!-- Contenedor Principal del Monitor -->
 <div class="app-container">
     <div class="logo-container">
         <div class="logo-circle">
@@ -40,6 +41,7 @@
         <h1>Dólar Monitor Diario</h1>
     </div>
 
+    <!-- Card de Cálculos y Selector de Tasas -->
     <div class="main-card">
         <p class="subtitle">Tasa de Referencia Oficial</p>
         
@@ -55,6 +57,7 @@
             <i class="icon-copy" id="copy-usd" title="Copiar USD"></i>
         </div>
         
+        <!-- Botones rápidos de incremento -->
         <div class="quick-amounts">
             <button class="btn-quick" data-val="1">+1$</button>
             <button class="btn-quick" data-val="5">+5$</button>
@@ -78,10 +81,12 @@
         </div>
     </div>
 
+    <!-- Píldora de Fecha Actualizada -->
     <div class="date-pill">
         <span id="fecha-actual">Cargando fecha...</span> <i class="icon-calendar"></i>
     </div>
 
+    <!-- Barra de Navegación y Botones de Control Inferiores -->
     <div class="bottom-nav">
         <button class="btn-circle primary" id="btn-refresh">
             <i class="icon-hourglass" id="refresh-icon"></i>
@@ -95,10 +100,18 @@
         <button class="btn-circle" id="btn-theme"><i class="icon-moon"></i></button>
         <button class="btn-circle" id="btn-menu-toggle"><i class="icon-menu"></i></button>
     </div>
+
+    <!-- CONTENEDOR INTEGRADO DEL ANUNCIO NATIVO DE ADSTERRA -->
+    <div style="text-align: center; margin: 20px auto 10px auto; width: 100%; max-width: 320px; min-height: 80px;">
+        <script async="async" data-cfasync="false" src="https://pl30258405.effectivecpmnetwork.com/1716d7b93114bc39c04f960d56b29ed6/invoke.js"></script>
+        <div id="container-1716d7b93114bc39c04f960d56b29ed6"></div>
+    </div>
 </div>
 
+<!-- Notificaciones Toast Flotantes -->
 <div id="toast" class="toast">Copiado al portapapeles</div>
 
+<!-- Modal para Configuración de la Tasa Manual -->
 <div class="modal-overlay" id="modal-manual-rate">
     <div class="modal-card">
         <div class="modal-header">
@@ -121,6 +134,7 @@
     </div>
 </div>
 
+<!-- Enlace de Scripts del Sistema Lógico -->
 <script src="app.js"></script>
 <script src="tasa-personalizada.js"></script>
 <script src="calculadora-euro.js"></script>
