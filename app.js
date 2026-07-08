@@ -116,12 +116,17 @@ async function obtenerTasa() {
         localStorage.setItem('dmd_tasas', JSON.stringify(tasas));
         tasaActual = tasas[tipoTasaActual];
         
+        // Guardamos la fecha exacta de sincronización exitosa
+        const ahora = new Date();
+        const fechaFormateada = ahora.toLocaleDateString('es-VE', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit', hour12: true
+        });
+        localStorage.setItem('dmd_ultima_fecha', fechaFormateada);
+        
         if (fechaTexto) {
-            const ahora = new Date();
-            fechaTexto.textContent = ahora.toLocaleDateString('es-VE', {
-                day: '2-digit', month: '2-digit', year: 'numeric',
-                hour: '2-digit', minute: '2-digit', hour12: true
-            });
+            fechaTexto.innerHTML = fechaFormateada;
+            fechaTexto.style.color = "var(--text-main)"; // Color normal
         }
         
         calcular('usd');
@@ -129,6 +134,16 @@ async function obtenerTasa() {
     } catch (error) {
         console.error('Error obteniendo tasas:', error);
         mostrarToast('Usando tasas locales sin conexión');
+        
+        // Recuperamos la última fecha y la mostramos en rojo con alerta
+        const fechaGuardada = localStorage.getItem('dmd_ultima_fecha') || 'Fecha desconocida';
+        if (fechaTexto) {
+            fechaTexto.innerHTML = `⚠️ Tasa del: ${fechaGuardada}`;
+            fechaTexto.style.color = "#ff3c3c";
+        }
+        
+        tasaActual = tasas[tipoTasaActual];
+        calcular('usd');
     } finally {
         if (refreshIcon) refreshIcon.classList.remove('spinning');
     }
@@ -138,18 +153,12 @@ async function obtenerTasa() {
 // 6. GESTIÓN DE NOTIFICACIONES PUSH
 // ==========================================
 function solicitarPermisos() {
-    // 1. Verificamos si ya activó las notificaciones previamente
-    if (localStorage.getItem('dmd_notificaciones_activas') === 'true') {
-        mostrarToast('Las notificaciones ya están activadas.');
-        return;
-    }
-
+    // Eliminamos el 'return' temprano para permitir re-sincronizar el token siempre
     Notification.requestPermission().then((permission) => {
         if (permission === 'granted') {
             console.log('Permiso de notificaciones concedido');
             
             if ('serviceWorker' in navigator) {
-                // Esperamos que el service worker esté activo para pasarle el registro a Firebase
                 navigator.serviceWorker.ready.then((registration) => {
                     messaging.getToken({ 
                         vapidKey: 'BAo47eL2Ro2S9fsWVXjki9-b026QHG2iPtMNONzbSOA988x93F1vKlmnnkIjMJFbZIErXmk-FW7A66QptBkcFf4',
@@ -163,14 +172,11 @@ function solicitarPermisos() {
                             .then(() => {
                                 console.log('¡Token guardado!');
                                 
-                                // 2. Guardamos el estado en localStorage
                                 localStorage.setItem('dmd_notificaciones_activas', 'true');
                                 
-                                // 3. Deshabilitamos el botón visualmente
+                                // Cambiamos el color para indicar éxito sin bloquear el botón
                                 if (btnEnableNotifications) {
-                                    btnEnableNotifications.disabled = true;
-                                    btnEnableNotifications.classList.add('btn-disabled'); // Opcional: para CSS
-                                    btnEnableNotifications.innerHTML = 'Notificaciones Activas ✅';
+                                    btnEnableNotifications.style.color = "var(--accent-teal)";
                                 }
                                 
                                 mostrarToast('¡Notificaciones activadas!');
@@ -302,12 +308,10 @@ if (btnCapture) {
 
 // Disparador del Botón de Notificaciones
 if (btnEnableNotifications) {
-    // Comprobar al cargar la app si ya están activas
+    // Si ya activó las notifs, le damos color al ícono, pero siempre será clickeable
     if (localStorage.getItem('dmd_notificaciones_activas') === 'true') {
-        btnEnableNotifications.disabled = true;
-        btnEnableNotifications.innerHTML = 'Notificaciones Activas ✅';
+        btnEnableNotifications.style.color = "var(--accent-teal)";
     }
-    
     btnEnableNotifications.addEventListener('click', solicitarPermisos);
 }
 
