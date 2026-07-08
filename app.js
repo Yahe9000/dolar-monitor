@@ -138,6 +138,12 @@ async function obtenerTasa() {
 // 6. GESTIÓN DE NOTIFICACIONES PUSH
 // ==========================================
 function solicitarPermisos() {
+    // 1. Verificamos si ya activó las notificaciones previamente
+    if (localStorage.getItem('dmd_notificaciones_activas') === 'true') {
+        mostrarToast('Las notificaciones ya están activadas.');
+        return;
+    }
+
     Notification.requestPermission().then((permission) => {
         if (permission === 'granted') {
             console.log('Permiso de notificaciones concedido');
@@ -156,6 +162,17 @@ function solicitarPermisos() {
                             })
                             .then(() => {
                                 console.log('¡Token guardado!');
+                                
+                                // 2. Guardamos el estado en localStorage
+                                localStorage.setItem('dmd_notificaciones_activas', 'true');
+                                
+                                // 3. Deshabilitamos el botón visualmente
+                                if (btnEnableNotifications) {
+                                    btnEnableNotifications.disabled = true;
+                                    btnEnableNotifications.classList.add('btn-disabled'); // Opcional: para CSS
+                                    btnEnableNotifications.innerHTML = 'Notificaciones Activas ✅';
+                                }
+                                
                                 mostrarToast('¡Notificaciones activadas!');
                             })
                             .catch((err) => console.error('Error al guardar en Firestore:', err));
@@ -285,6 +302,12 @@ if (btnCapture) {
 
 // Disparador del Botón de Notificaciones
 if (btnEnableNotifications) {
+    // Comprobar al cargar la app si ya están activas
+    if (localStorage.getItem('dmd_notificaciones_activas') === 'true') {
+        btnEnableNotifications.disabled = true;
+        btnEnableNotifications.innerHTML = 'Notificaciones Activas ✅';
+    }
+    
     btnEnableNotifications.addEventListener('click', solicitarPermisos);
 }
 
