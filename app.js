@@ -482,3 +482,42 @@ if ('serviceWorker' in navigator) {
       });
   });
                 }
+
+
+
+let deferredPrompt;
+const installButton = document.getElementById('install-button');
+
+// Escucha el evento que lanza el navegador cuando detecta que tu web es una PWA
+window.addEventListener('beforeinstallprompt', (e) => {
+    // Evita que aparezca el banner automático del navegador
+    e.preventDefault();
+    // Guardamos el evento para usarlo luego
+    deferredPrompt = e;
+    // Mostramos nuestro botón
+    installButton.style.display = 'flex'; 
+});
+
+// Cuando el usuario hace clic en TU botón
+installButton.addEventListener('click', (e) => {
+    if (deferredPrompt) {
+        // Lanzamos el diálogo de instalación
+        deferredPrompt.prompt();
+        // Esperamos a ver qué decidió el usuario
+        deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+                console.log('¡Usuario instaló la App!');
+            }
+            deferredPrompt = null;
+            // Ocultamos el botón después de la acción
+            installButton.style.display = 'none';
+        });
+    }
+});
+
+// Ocultar botón si ya se instaló
+window.addEventListener('appinstalled', (evt) => {
+    installButton.style.display = 'none';
+    console.log('App ya instalada');
+});
+
