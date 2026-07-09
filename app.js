@@ -120,12 +120,7 @@ function calcular(origen) {
 
 async function obtenerTasa() {
 
-    if (!document.getElementById('ad-actualizar-tasa')) {
-        const adScript = document.createElement('script');
-        adScript.id = 'ad-actualizar-tasa'; // Le ponemos un ID para evitar duplicados
-        adScript.src = "https://pl30271774.effectivecpmnetwork.com/f6/a5/df/f6a5df90e832ab50ad162b4e570a1473.js";
-        document.body.appendChild(adScript);
-    }
+    
     if (refreshIcon) refreshIcon.classList.add('spinning');
     try {
         // Ejecución en paralelo de todas las fuentes necesarias
