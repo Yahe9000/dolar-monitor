@@ -419,4 +419,20 @@ select.badge-bcv {
 .btn-quick.btn-clear:active {
     transform: scale(0.95);
             }
-                       
+
+
+.btn-install-floating {
+    position: fixed;
+    bottom: 90px; /* Ajusta este valor si quieres que esté más arriba o abajo */
+    right: 20px;
+    z-index: 9999; /* Asegura que esté por encima de todo */
+    background-color: #20a887; /* El color de tu marca */
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 20px;
+    font-weight: bold;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    cursor: pointer;
+}
+
